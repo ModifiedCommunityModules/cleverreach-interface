@@ -1,0 +1,1 @@
+- Dieses Modul fügt eine Schnittstelle zum Newsletteranbieter <strong>Cleverreach</strong> hinzu. Im Admin können Sie dann unter \"Zusatzmodule\" Ihre Daten eintragen. Es ist der Export in EINE Kundengruppe möglich.

@@ -1,0 +1,21 @@
+{
+    "name": "Cleverreach Schnittstelle",
+    "archiveName": "fishnetservices/cleverreach-interface",
+    "sourceDir": "new_files",
+    "version": "auto",
+    "productNumber": "20027",
+    "shortDescription": "Newsletter Anbindung",
+    "description": "Dieses Modul fügt eine Schnittstelle zum Newsletteranbieter <a href=\"http://www.cleverreach.de/?rk=xcetomni\" target=\"_blank\"><strong>Cleverreach</strong></a>  hinzu. Im Admin können Sie dann unter \"Zusatzmodule\" Ihre Daten eintragen. Es ist der Export in EINE Kundengruppe möglich.",
+    "developer": "fishnetservices",
+    "developerWebsite": "https://www.shopbetreuung.com/",
+    "website": "https://www.shopbetreuung.com/",
+    "category": "promotion/marketing",
+    "price": "free",
+    "require": {
+        "composer/autoload": "^1.1.0",
+        "robinthehood/modified-std-module": "^0.1.0"
+    },
+    "modifiedCompatibility": [
+        "2.0.5.1"
+    ]
+}
