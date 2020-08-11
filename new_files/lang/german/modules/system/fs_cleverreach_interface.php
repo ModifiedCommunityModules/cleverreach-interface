@@ -20,3 +20,4 @@ define('MODULE_FS_CLEVERREACH_INTERFACE_GROUP_ID_TITLE', 'Cleverreach Gruppen-ID
 define('MODULE_FS_CLEVERREACH_INTERFACE_GROUP_ID_DESC', '');
 
 define('BUTTON_EXPORT_FILTER_AMAZON', 'Amazon Kunden ausfiltern');
+define('BUTTON_UPDATE_RECEIVERS', 'Update Empf&auml;ger');

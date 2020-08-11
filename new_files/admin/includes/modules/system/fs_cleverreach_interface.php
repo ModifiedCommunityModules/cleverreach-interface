@@ -23,6 +23,7 @@ class fs_cleverreach_interface extends StdModule
             'text' => '<br /><div align="center">' .    xtc_button(BUTTON_SAVE). 
                                                         xtc_button_link(BUTTON_EXPORT, xtc_href_link("../interface/fs_cleverreach_interface.php")) .
                                                         xtc_button_link(BUTTON_EXPORT_FILTER_AMAZON, xtc_href_link("../interface/fs_cleverreach_interface.php", 'export_filter_amazon=1'), 'name="export_filter_amazon"') . 
+                                                        xtc_button_link(BUTTON_UPDATE_RECEIVERS, xtc_href_link("../interface/fs_cleverreach_interface.php", 'update_receivers=1'), 'name="update_receivers"') . 
                                                         xtc_button_link(BUTTON_CANCEL, xtc_href_link(FILENAME_MODULE_EXPORT, 'set=' . $_GET['set'] . '&module=fs_cleverreach_interface')) . "</div>"
         ];
     }
