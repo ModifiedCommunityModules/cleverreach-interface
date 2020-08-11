@@ -1,17 +1,17 @@
 <?php
 
-require_once('fs_cleverreach_interface_rest_client.php');
-require("../includes/application_top_export.php");
-require("../inc/xtc_not_null.inc.php");
-require("../inc/xtc_get_country_name.inc.php");
+require_once 'fs_cleverreach_interface_rest_client.php';
+require '../includes/application_top_export.php';
+require '../inc/xtc_not_null.inc.php';
+require '../inc/xtc_get_country_name.inc.php';
 
-if(!defined('MODULE_FS_CLEVERREACH_INTERFACE_STATUS') || MODULE_FS_CLEVERREACH_INTERFACE_STATUS != 'true') 
+if(!defined('MODULE_FS_CLEVERREACH_INTERFACE_STATUS') || MODULE_FS_CLEVERREACH_INTERFACE_STATUS != 'true')
 {
 	header('Location: ' . preg_replace("/[\r\n]+(.*)$/i", "", html_entity_decode($_SERVER['HTTP_REFERER'])));
 	exit();
 }
 
-if(!defined('MODULE_FS_CLEVERREACH_INTERFACE_CLIENT_ID') || !defined('MODULE_FS_CLEVERREACH_INTERFACE_USERNAME') || !defined('MODULE_FS_CLEVERREACH_INTERFACE_PASSWORD')) 
+if(!defined('MODULE_FS_CLEVERREACH_INTERFACE_CLIENT_ID') || !defined('MODULE_FS_CLEVERREACH_INTERFACE_USERNAME') || !defined('MODULE_FS_CLEVERREACH_INTERFACE_PASSWORD'))
 {
 	header('Location: ' . preg_replace("/[\r\n]+(.*)$/i", "", html_entity_decode($_SERVER['HTTP_REFERER'])));
 	exit();
@@ -51,9 +51,9 @@ if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_SUBSCRIBERS == 'true') {
 
 	$manual_registered_customers = xtc_db_query("SELECT
 										customers_id,
-										customers_email_address as email, 
+										customers_email_address as email,
 										date_added as registered,
-										customers_firstname as firstname, 
+										customers_firstname as firstname,
 										customers_lastname as lastname
 									FROM " . TABLE_NEWSLETTER_RECIPIENTS . " WHERE mail_status = '1' ");
 
@@ -113,9 +113,9 @@ if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_BUYERS == 'true') {
 	}
 	$order_rows = xtc_db_query("SELECT DISTINCT o.orders_id, o.customers_id, o.customers_email_address as email, o.customers_firstname as firstname, o.customers_lastname as lastname, o.customers_gender as gender, o.customers_street_address as street, o.customers_city as city, o.customers_postcode as zip, o.customers_country as country, o.date_purchased, op.products_id, op.products_name, op.products_price, op.products_quantity from " . TABLE_ORDERS . " o JOIN " . TABLE_ORDERS_PRODUCTS . " op ON o.orders_id = op.orders_id GROUP BY o.customers_id ORDER BY o.date_purchased ");
 	while ($order_row = xtc_db_fetch_array($order_rows)) {
-		
+
 		$orders = array();
-		
+
 		$orders[] = array(
 				"order_id"   => $order_row["orders_id"],      //required
 				"product_id" => $order_row["products_id"],    //optional
@@ -125,7 +125,7 @@ if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_BUYERS == 'true') {
 				"amount"     => $order_row["products_quantity"], //optional
 				"source"     => STORE_NAME          //optional
 			);
-		
+
 		$flagged_customers = xtc_db_query("	SELECT c.customers_date_added as registered, c.customers_gender as gender, c.customers_dob as dob FROM " . TABLE_CUSTOMERS . " c WHERE c.customers_id = '" . $order_row["customers_id"] . "' " . $where_clause);
 		$receivers = array('postdata' =>  array());
 
@@ -153,7 +153,7 @@ if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_BUYERS == 'true') {
 				if ($update_receivers) {
 					$rest->delete("/groups.json/".$group_id."/receivers/".$order_row["email"]);
 				}
-				
+
 				if (count($receivers) > 1000) {
 					$rest->post("/groups.json/".$group_id."/receivers", $receivers);
 					$receivers = array();
