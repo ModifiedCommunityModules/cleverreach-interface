@@ -20,7 +20,7 @@ if(!defined('MODULE_FS_CLEVERREACH_INTERFACE_CLIENT_ID') || !defined('MODULE_FS_
 $rest = new \CR\tools\rest("https://rest.cleverreach.com/v2");
 
 if (trim(MODULE_FS_CLEVERREACH_INTERFACE_CLIENT_ID) == '' || trim(MODULE_FS_CLEVERREACH_INTERFACE_USERNAME) == '' || trim(MODULE_FS_CLEVERREACH_INTERFACE_PASSWORD) == '') {
-	die('Please enter all login credentials for Cleverreach!');
+	die('Bitte geben Sie alle Anmeldedaten für Cleverreach ein!');
 }
 
 $token = $rest->post('/login',
@@ -31,10 +31,6 @@ $token = $rest->post('/login',
 	)
 );
 
-if ($_GET['update_receivers']) {
-	$update_receivers = $_GET['update_receivers'];
-}
-
 $rest->setAuthMode("bearer", $token);
 
 $groups = $rest->get("/groups");
@@ -42,12 +38,13 @@ $groups = $rest->get("/groups");
 $group_id = MODULE_FS_CLEVERREACH_INTERFACE_GROUP_ID;
 
 if (!isset($group_id)) {
-	die('No groups found! Please create one in the Cleverreach backend');
+	die('Keine Empfänger-Gruppen gefunden! Bitte erstellen Sie eine im Cleverreach-Backend');
 }
+
+$receivers = array();
 
 if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_SUBSCRIBERS == 'true') {
 
-	$receivers = array();
 
 	$manual_registered_customers = xtc_db_query("SELECT
 										customers_id,
@@ -73,7 +70,7 @@ if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_SUBSCRIBERS == 'true') {
 			);
 		}
 
-		$gender_query = xtc_db_query("SELECT c.customers_gender as gender, ab.entry_country_id as country, ab.entry_city as city, ab.entry_postcode as zip, ab.entry_street_address as street, ab.entry_company as company FROM " . TABLE_CUSTOMERS . " c JOIN ".TABLE_ADDRESS_BOOK." ab ON c.customers_id = ab.customers_id WHERE customers_id = '" . $customer['customers_id'] . "' AND c.customers_default_address_id = ab.address_book_id");
+		$gender_query = xtc_db_query("SELECT c.customers_gender as gender, ab.entry_country_id as country, ab.entry_city as city, ab.entry_postcode as zip, ab.entry_street_address as street, ab.entry_company as company FROM " . TABLE_CUSTOMERS . " c JOIN ".TABLE_ADDRESS_BOOK." ab ON c.customers_id = ab.customers_id WHERE c.customers_id = '" . $customer['customers_id'] . "' AND c.customers_default_address_id = ab.address_book_id AND c.customers_email_address NOT LIKE '%@marketplace.amazon.de%'");
 		$customers_data = xtc_db_fetch_array($gender_query);
 		$country = xtc_get_country_name($customers_data['country']);
 
@@ -93,16 +90,7 @@ if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_SUBSCRIBERS == 'true') {
 							"company" => $customers_data["company"]
 					),
 					"orders" => $orders
-			);
-
-		if ($update_receivers) {
-			$deleted = $rest->delete("/groups.json/".$group_id."/receivers/".$customer["email"]);
-		}
-
-		if (count($receivers) > 1000) {
-			$rest->post("/groups.json/".$group_id."/receivers", $receivers);
-			$receivers = array();
-		}
+		);
 	}
 }
 
@@ -126,13 +114,12 @@ if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_BUYERS == 'true') {
 				"source"     => STORE_NAME          //optional
 			);
 
-		$flagged_customers = xtc_db_query("	SELECT c.customers_date_added as registered, c.customers_gender as gender, c.customers_dob as dob FROM " . TABLE_CUSTOMERS . " c WHERE c.customers_id = '" . $order_row["customers_id"] . "' " . $where_clause);
-		$receivers = array('postdata' =>  array());
+        $flagged_customers = xtc_db_query("SELECT c.customers_date_added as registered, c.customers_gender as gender, c.customers_dob as dob FROM " . TABLE_CUSTOMERS . " c WHERE c.customers_id = '" . $order_row["customers_id"] . "' AND customers_email_address NOT LIKE '%@marketplace.amazon.de%'");
 
 		if (xtc_db_num_rows($flagged_customers) > 0) {
 			while ($customer = xtc_db_fetch_array($flagged_customers)) {
 
-				$receivers["postdata"][] = array(
+				$receivers[] = array(
 					"email"			=> $order_row["email"],
 					"activated"		=> strtotime($customer["registered"]),
 					"registered"	=> strtotime($customer["registered"]),
@@ -149,51 +136,22 @@ if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_BUYERS == 'true') {
 						),
 					"orders" => $orders
 				);
-
-				if ($update_receivers) {
-					$rest->delete("/groups.json/".$group_id."/receivers/".$order_row["email"]);
-				}
-
-				if (count($receivers) > 1000) {
-					$rest->post("/groups.json/".$group_id."/receivers", $receivers);
-					$receivers = array();
-				}
-			}
-		} else {
-			$receivers["postdata"][] = array(
-				"email"			=> $order_row["email"],
-				"activated"		=> strtotime($order_row["date_purchased"]),
-				"registered"	=> strtotime($order_row["date_purchased"]),
-				"source"		=> STORE_NAME,
-				"attributes"	=> array(
-						"nachname" => utf8_encode($order_row["firstname"]),
-						"vorname" =>  utf8_encode($order_row["lastname"]),
-						"m__nnlich_weiblich" =>    $customer["gender"],
-						"geburtsdatum" => $customer['dob'],
-						"ort"	=> utf8_encode($order_row["city"]),
-						"street" => utf8_encode($order_row["street"]),
-						"zip" => $order_row["zip"],
-						"country" => utf8_encode($order_row["country"])
-				),
-				"orders" => $orders
-			);
-
-			if ($update_receivers) {
-				$rest->delete("/groups.json/".$group_id."/receivers/".$order_row["email"]);
-			}
-
-			if (count($receivers) > 1000) {
-				$rest->post("/groups.json/".$group_id."/receivers", $receivers);
-				$receivers = array();
 			}
 		}
 	}
 }
 
 if (count($receivers) > 0) {
-	$rest->post("/groups.json/".$group_id."/receivers", $receivers);
+	foreach ($receivers as $receiver) {
+		$response = $rest->get("/groups.json/".$group_id."/receivers/".$receiver["email"]);
+		if(!$response) {
+			$rest->post("/groups.json/".$group_id."/receivers", $receiver);
+		} else {
+			$rest->put("/groups.json/".$group_id."/receivers/".$receiver["email"], json_encode($receiver));
+		}
+	}
 } else {
-	die('No new receivers found');
+	die('Keine neuen Daten gefunden');
 }
 $receivers = array();
 
