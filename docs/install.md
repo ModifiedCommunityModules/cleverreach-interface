@@ -7,7 +7,30 @@
 1. Loggen Sie sich in den Admin-Bereich ein
 2. Öffnen Sie die **Menüoption Module > Systemmodule**.
 3. Wählen Sie das Cleverreach Interface und klicken Sie auf Installieren.
+4. Im Ordner **/interface** eine **.htaccess**-Datei mit folgendem Inhalt erstellen
 
----
+```sh
+#  -----------------------------------------------------------------------------------------
+#  $Id: .htaccess 11767 2020-09-10 15:29:44Z GTB $
+#
+#  modified eCommerce Shopsoftware
+#  http://www.modified-shop.org
+#
+#  Copyright (c) 2009 - 2016 [www.modified-shop.org]
+#  -----------------------------------------------------------------------------------------
+#  based on: 
+#  (c) 2000-2001 The Exchange Project 
+#  (c) 2002-2003 osCommerce (.htaccess,v 1.4 2001/04/22); www.oscommerce.com 
+#  (c) 2003  nextcommerce (.htaccess,v 1.3 2003/08/13); www.nextcommerce.org 
+#  (c) 2003  XT-Commerce (.htaccess,v 1.3 2003/08/13); www.xt-commerce.com
+#
+#  Released under the GNU General Public License 
+#  -----------------------------------------------------------------------------------------
+#
+# This is used with Apache WebServers
+# The following blocks direct HTTP requests in this directory recursively
 
-#### Für dieses Modul müssen keine Änderungen vorgenommen werden.
+Options -Indexes
+```
+
+
