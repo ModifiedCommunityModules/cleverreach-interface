@@ -279,7 +279,7 @@ class rest
                 }
 
                 if ($this->throwExceptions) {
-                    throw new \Exception('' . $header["http_code"] . ';' . $message);
+                    // throw new \Exception('' . $header["http_code"] . ';' . $message);
                 }
                 $in = null;
 
