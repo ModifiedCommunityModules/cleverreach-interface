@@ -143,7 +143,7 @@ if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_BUYERS == 'true') {
 
 if (count($receivers) > 0) {
 	foreach ($receivers as $receiver) {
-		$response = $rest->get("/groups.json/".$group_id."/receivers/".$receiver["email"]);
+		$response = $rest->get("/groups.json/".$group_id."/receivers/", $receiver["email"]);
 		if(!$response) {
 			$rest->post("/groups.json/".$group_id."/receivers", $receiver);
 		} else {
