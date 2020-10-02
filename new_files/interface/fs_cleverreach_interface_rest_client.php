@@ -72,12 +72,13 @@ class rest
     {
         $this->resetDebug();
         if (is_string($data)) {
-            if (!$data = json_decode($data)) {
-                throw new \Exception("data is string but no JSON");
+            if (is_string($data)) {
+                $url = sprintf("%s%s", $this->url . $path, ($data ? $data : ""));
+            } else {
+                $url = sprintf("%s?%s", $this->url . $path, ($data ? http_build_query($data) : ""));
             }
         }
 
-        $url = sprintf("%s?%s", $this->url . $path, ($data ? http_build_query($data) : ""));
         $this->debug("url", $url);
 
         $curl = curl_init($url);
@@ -278,7 +279,7 @@ class rest
                 }
 
                 if ($this->throwExceptions) {
-                    throw new \Exception('' . $header["http_code"] . ';' . $message);
+                    // throw new \Exception('' . $header["http_code"] . ';' . $message);
                 }
                 $in = null;
 
