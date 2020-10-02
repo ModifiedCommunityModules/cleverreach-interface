@@ -2,7 +2,7 @@
 defined('_VALID_XTC') or die('Direct Access to this location is not allowed.');
 
 use RobinTheHood\ModifiedStdModule\Classes\StdModule;
-require_once DIR_FS_DOCUMENT_ROOT . '/vendor-no-composer/fishnetservices/CleverreachInterface/autoload.php';
+require_once DIR_FS_DOCUMENT_ROOT . '/vendor-no-composer/autoload.php';
 
 class fs_cleverreach_interface extends StdModule
 {
