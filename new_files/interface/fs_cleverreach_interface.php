@@ -4,6 +4,12 @@ require_once 'fs_cleverreach_interface_rest_client.php';
 require '../includes/application_top_export.php';
 require '../inc/xtc_not_null.inc.php';
 require '../inc/xtc_get_country_name.inc.php';
+require '../inc/xtc_href_link.inc.php';
+session_start();
+
+if (!isset($_SESSION['cleacerreach_interface_counter'])) {
+	$_SESSION['cleacerreach_interface_counter'] = 1;
+}
 
 if(!defined('MODULE_FS_CLEVERREACH_INTERFACE_STATUS') || MODULE_FS_CLEVERREACH_INTERFACE_STATUS != 'true')
 {
@@ -43,6 +49,15 @@ if (!isset($group_id)) {
 
 $receivers = array();
 
+$where_limit = '';
+$where_offset = '';
+if (isset($_SESSION['cleacerreach_interface_counter'])) {
+    $where_limit .= ' LIMIT 100  ';
+    if ($_SESSION['cleacerreach_interface_counter'] > 1) {
+        $where_offset .= ' OFFSET ' . ($_SESSION['cleacerreach_interface_counter'] - 1) * 100 . ' ';
+    }
+}
+
 if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_SUBSCRIBERS == 'true') {
 
 
@@ -52,7 +67,7 @@ if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_SUBSCRIBERS == 'true') {
 										date_added as registered,
 										customers_firstname as firstname,
 										customers_lastname as lastname
-									FROM " . TABLE_NEWSLETTER_RECIPIENTS . " WHERE mail_status = '1' ");
+									FROM " . TABLE_NEWSLETTER_RECIPIENTS . " WHERE mail_status = '1' "  . $where_limit . $where_offset);
 
 	while ($customer = xtc_db_fetch_array($manual_registered_customers)) {
 		$orders = array();
@@ -99,7 +114,7 @@ if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_BUYERS == 'true') {
 	if (isset($_GET['export_filter_amazon']) && $_GET['export_filter_amazon'] == 1) {
 		$where_clause .= " AND customers_email_address NOT LIKE '%@marketplace.amazon.de%'";
 	}
-	$order_rows = xtc_db_query("SELECT DISTINCT o.orders_id, o.customers_id, o.customers_email_address as email, o.customers_firstname as firstname, o.customers_lastname as lastname, o.customers_gender as gender, o.customers_street_address as street, o.customers_city as city, o.customers_postcode as zip, o.customers_country as country, o.date_purchased, op.products_id, op.products_name, op.products_price, op.products_quantity from " . TABLE_ORDERS . " o JOIN " . TABLE_ORDERS_PRODUCTS . " op ON o.orders_id = op.orders_id GROUP BY o.customers_id ORDER BY o.date_purchased ");
+	$order_rows = xtc_db_query("SELECT DISTINCT o.orders_id, o.customers_id, o.customers_email_address as email, o.customers_firstname as firstname, o.customers_lastname as lastname, o.customers_gender as gender, o.customers_street_address as street, o.customers_city as city, o.customers_postcode as zip, o.customers_country as country, o.date_purchased, op.products_id, op.products_name, op.products_price, op.products_quantity from " . TABLE_ORDERS . " o JOIN " . TABLE_ORDERS_PRODUCTS . " op ON o.orders_id = op.orders_id GROUP BY o.customers_id ORDER BY o.date_purchased " . $where_limit . $where_offset);
 	while ($order_row = xtc_db_fetch_array($order_rows)) {
 
 		$orders = array();
@@ -153,7 +168,15 @@ if (count($receivers) > 0) {
 } else {
 	die('Keine neuen Daten gefunden');
 }
+
+if (count($receivers) == 100) {
+	$_SESSION['cleacerreach_interface_counter'] = $_SESSION['cleacerreach_interface_counter'] + 1;
+	header("Refresh:1;");
+	exit;
+}
+
 $receivers = array();
 
-header('Location: ' . preg_replace("/[\r\n]+(.*)$/i", "", html_entity_decode($_SERVER['HTTP_REFERER'])));
+unset($_SESSION['cleacerreach_interface_counter']);
+header('Location: ' . xtc_href_link_admin((defined('DIR_ADMIN') ? DIR_ADMIN : 'admin/').'module_export.php', 'set=system&module=fs_cleverreach_interface&action=edit', 'NONSSL'));
 exit();
