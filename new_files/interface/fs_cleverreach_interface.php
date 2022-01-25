@@ -11,6 +11,10 @@ if (!isset($_SESSION['cleacerreach_interface_counter'])) {
 	$_SESSION['cleacerreach_interface_counter'] = 1;
 }
 
+if (!isset($_SESSION['cleacerreach_interface_error'])) {
+	$_SESSION['cleacerreach_interface_error'] = false;
+}
+
 if(!defined('MODULE_FS_CLEVERREACH_INTERFACE_STATUS') || MODULE_FS_CLEVERREACH_INTERFACE_STATUS != 'true')
 {
 	header('Location: ' . preg_replace("/[\r\n]+(.*)$/i", "", html_entity_decode($_SERVER['HTTP_REFERER'])));
@@ -158,11 +162,15 @@ if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_BUYERS == 'true') {
 
 if (count($receivers) > 0) {
 	foreach ($receivers as $receiver) {
-		$response = $rest->get("/groups.json/".$group_id."/receivers/", $receiver["email"]);
-		if(!$response) {
-			$rest->post("/groups.json/".$group_id."/receivers", $receiver);
-		} else {
-			$rest->put("/groups.json/".$group_id."/receivers/".$receiver["email"], json_encode($receiver));
+		try {
+			$response = $rest->get("/groups.json/".$group_id."/receivers/", $receiver["email"]);
+			if(!$response) {
+				$rest->post("/groups.json/".$group_id."/receivers", $receiver);
+			} else {
+				$rest->put("/groups.json/".$group_id."/receivers/".$receiver["email"], json_encode($receiver));
+			}
+		} catch (Exception $e) {
+			$_SESSION['cleacerreach_interface_error'] = true;
 		}
 	}
 } else {
@@ -178,5 +186,17 @@ if (count($receivers) == 100) {
 $receivers = array();
 
 unset($_SESSION['cleacerreach_interface_counter']);
-header('Location: ' . xtc_href_link_admin((defined('DIR_ADMIN') ? DIR_ADMIN : 'admin/').'module_export.php', 'set=system&module=fs_cleverreach_interface&action=edit', 'NONSSL'));
+
+if (isset($_GET['redirect_back']) && $_GET['redirect_back'] == true) {
+	header('Location: ' . xtc_href_link_admin((defined('DIR_ADMIN') ? DIR_ADMIN : 'admin/').'module_export.php', 'set=system&module=fs_cleverreach_interface&action=edit', 'NONSSL'));
+	exit();
+}
+
+if (isset($_SESSION['cleacerreach_interface_error']) && $_SESSION['cleacerreach_interface_error'] == true) {
+	echo 'Fehler: Import nicht erfolgreich. Bitte prüfen Sie die eingegebenen Daten';
+} else {
+	echo 'Import erfolgreich';
+}
+
+unset($_SESSION['cleacerreach_interface_error']);
 exit();

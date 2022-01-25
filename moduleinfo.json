@@ -16,6 +16,6 @@
         "robinthehood/modified-std-module": "^0.1.0"
     },
     "modifiedCompatibility": [
-        "2.0.5.1"
+        "2.0.4.2", "2.0.5.1"
     ]
 }

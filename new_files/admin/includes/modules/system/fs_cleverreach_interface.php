@@ -21,7 +21,7 @@ class fs_cleverreach_interface extends StdModule
     {
         return [
             'text' => '<br /><div align="center">' .    xtc_button(BUTTON_SAVE). 
-                                                        xtc_button_link(BUTTON_EXPORT, xtc_href_link("../interface/fs_cleverreach_interface.php")) .
+                                                        xtc_button_link(BUTTON_EXPORT, xtc_href_link("../interface/fs_cleverreach_interface.php?redirect_back=true")) .
                                                         xtc_button_link(BUTTON_CANCEL, xtc_href_link(FILENAME_MODULE_EXPORT, 'set=' . $_GET['set'] . '&module=fs_cleverreach_interface')) . "</div>"
         ];
     }
