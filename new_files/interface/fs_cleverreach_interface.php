@@ -62,6 +62,55 @@ if (isset($_SESSION['cleacerreach_interface_counter'])) {
     }
 }
 
+if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_BUYERS == 'true') {
+  $where_clause = '';
+  if (isset($_GET['export_filter_amazon']) && $_GET['export_filter_amazon'] == 1) {
+    $where_clause .= " AND customers_email_address NOT LIKE '%@marketplace.amazon.de%'";
+  }
+  $order_rows = xtc_db_query("SELECT DISTINCT o.orders_id, o.customers_id, o.customers_email_address as email, o.customers_firstname as firstname, o.customers_lastname as lastname, o.customers_gender as gender, o.customers_street_address as street, o.customers_city as city, o.customers_postcode as zip, o.customers_country as country, o.date_purchased, op.products_id, op.products_name, op.products_price, op.products_quantity from " . TABLE_ORDERS . " o JOIN " . TABLE_ORDERS_PRODUCTS . " op ON o.orders_id = op.orders_id GROUP BY o.customers_id ORDER BY o.date_purchased " . $where_limit . $where_offset);
+  while ($order_row = xtc_db_fetch_array($order_rows)) {
+
+    $orders = array();
+
+    $orders[] = array(
+      "order_id"   => $order_row["orders_id"],      //required
+      "product_id" => $order_row["products_id"],    //optional
+      "product"    => utf8_encode($order_row["products_name"]),  //required
+      "price"      => $order_row["products_price"],  //optional
+      "currency"   => "EUR",                     //optional
+      "amount"     => $order_row["products_quantity"], //optional
+      "source"     => STORE_NAME          //optional
+    );
+
+    $flagged_customers = xtc_db_query("SELECT c.customers_date_added as registered, c.customers_gender as gender, c.customers_dob as dob FROM " . TABLE_CUSTOMERS . " c WHERE c.customers_id = '" . $order_row["customers_id"] . "' AND customers_email_address NOT LIKE '%@marketplace.amazon.de%'");
+
+    if (xtc_db_num_rows($flagged_customers) > 0) {
+      while ($customer = xtc_db_fetch_array($flagged_customers)) {
+
+        $receivers[] = array(
+          "email"			=> $order_row["email"],
+          "activated"		=> getOrdersCount($order_row["customers_id"]) > 0 ? time() : 0,
+          "registered"	=> strtotime($customer["registered"]),
+          "deactivated" => getOrdersCount($order_row["customers_id"]) > 0 ? 0 : time(),
+          "source"		=> STORE_NAME,
+          "active" => getOrdersCount($order_row["customers_id"]) > 0,
+          "attributes"	=> array(
+            "nachname" => utf8_encode($order_row["firstname"]),
+            "vorname" =>  utf8_encode($order_row["lastname"]),
+            "m__nnlich_weiblich" =>    $customer["gender"],
+            "geburtsdatum" => $customer['dob'],
+            "ort"	=> utf8_encode($order_row["city"]),
+            "street" => utf8_encode($order_row["street"]),
+            "zip" => $order_row["zip"],
+            "country" => utf8_encode($order_row["country"])
+          ),
+          "orders" => $orders
+        );
+      }
+    }
+  }
+}
+
 if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_SUBSCRIBERS == 'true') {
 
 
@@ -113,59 +162,12 @@ if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_SUBSCRIBERS == 'true') {
 	}
 }
 
-if (MODULE_FS_CLEVERREACH_INTERFACE_IMPORT_BUYERS == 'true') {
-	$where_clause = '';
-	if (isset($_GET['export_filter_amazon']) && $_GET['export_filter_amazon'] == 1) {
-		$where_clause .= " AND customers_email_address NOT LIKE '%@marketplace.amazon.de%'";
-	}
-	$order_rows = xtc_db_query("SELECT DISTINCT o.orders_id, o.customers_id, o.customers_email_address as email, o.customers_firstname as firstname, o.customers_lastname as lastname, o.customers_gender as gender, o.customers_street_address as street, o.customers_city as city, o.customers_postcode as zip, o.customers_country as country, o.date_purchased, op.products_id, op.products_name, op.products_price, op.products_quantity from " . TABLE_ORDERS . " o JOIN " . TABLE_ORDERS_PRODUCTS . " op ON o.orders_id = op.orders_id GROUP BY o.customers_id ORDER BY o.date_purchased " . $where_limit . $where_offset);
-	while ($order_row = xtc_db_fetch_array($order_rows)) {
-
-		$orders = array();
-
-		$orders[] = array(
-				"order_id"   => $order_row["orders_id"],      //required
-				"product_id" => $order_row["products_id"],    //optional
-				"product"    => utf8_encode($order_row["products_name"]),  //required
-				"price"      => $order_row["products_price"],  //optional
-				"currency"   => "EUR",                     //optional
-				"amount"     => $order_row["products_quantity"], //optional
-				"source"     => STORE_NAME          //optional
-			);
-
-        $flagged_customers = xtc_db_query("SELECT c.customers_date_added as registered, c.customers_gender as gender, c.customers_dob as dob FROM " . TABLE_CUSTOMERS . " c WHERE c.customers_id = '" . $order_row["customers_id"] . "' AND customers_email_address NOT LIKE '%@marketplace.amazon.de%'");
-
-		if (xtc_db_num_rows($flagged_customers) > 0) {
-			while ($customer = xtc_db_fetch_array($flagged_customers)) {
-
-				$receivers[] = array(
-					"email"			=> $order_row["email"],
-					"activated"		=> strtotime($customer["registered"]),
-					"registered"	=> strtotime($customer["registered"]),
-					"source"		=> STORE_NAME,
-					"attributes"	=> array(
-						"nachname" => utf8_encode($order_row["firstname"]),
-						"vorname" =>  utf8_encode($order_row["lastname"]),
-						"m__nnlich_weiblich" =>    $customer["gender"],
-						"geburtsdatum" => $customer['dob'],
-						"ort"	=> utf8_encode($order_row["city"]),
-						"street" => utf8_encode($order_row["street"]),
-						"zip" => $order_row["zip"],
-						"country" => utf8_encode($order_row["country"])
-						),
-					"orders" => $orders
-				);
-			}
-		}
-	}
-}
-
 if (count($receivers) > 0) {
 	foreach ($receivers as $receiver) {
 		try {
 			$response = $rest->get("/groups.json/".$group_id."/receivers/", $receiver["email"]);
 			if(!$response) {
-				$rest->post("/groups.json/".$group_id."/receivers", $receiver);
+				$rest->post("/groups.json/".$group_id."/receivers", json_encode($receiver));
 			} else {
 				$rest->put("/groups.json/".$group_id."/receivers/".$receiver["email"], json_encode($receiver));
 			}
@@ -200,3 +202,16 @@ if (isset($_SESSION['cleacerreach_interface_error']) && $_SESSION['cleacerreach_
 
 unset($_SESSION['cleacerreach_interface_error']);
 exit();
+
+
+function getOrdersCount($customers_id) {
+
+  $canceled_orders_status_id = 8;
+  if (defined('MODULE_FS_CLEVERREACH_INTERFACE_CANCELED_ORDER_STATUS_ID') && MODULE_FS_CLEVERREACH_INTERFACE_CANCELED_ORDER_STATUS_ID != '') {
+    $canceled_orders_status_id = MODULE_FS_CLEVERREACH_INTERFACE_CANCELED_ORDER_STATUS_ID;
+  }
+  $q = xtc_db_query("SELECT COUNT(orders_id) as total FROM " . TABLE_ORDERS . " WHERE customers_id = " . $customers_id . " AND orders_status != " . $canceled_orders_status_id);
+  $r = xtc_db_fetch_array($q);
+
+  return $r['total'];
+}
