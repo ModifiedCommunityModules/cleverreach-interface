@@ -15,6 +15,7 @@ class fs_cleverreach_interface extends StdModule
         $this->addKey('IMPORT_SUBSCRIBERS');
         $this->addKey('IMPORT_BUYERS');
         $this->addKey('GROUP_ID');
+        $this->addKey('CANCELED_ORDER_STATUS_ID');
     }
 
     public function display()
@@ -35,6 +36,8 @@ class fs_cleverreach_interface extends StdModule
         $this->addConfiguration('IMPORT_SUBSCRIBERS', 'true', 6, 19, 'xtc_cfg_select_option(array(\'true\', \'false\'),');
         $this->addConfiguration('IMPORT_BUYERS', 'false', 6, 20, 'xtc_cfg_select_option(array(\'true\', \'false\'),');
         $this->addConfiguration('GROUP_ID', '', 6, 21);
+        $this->addConfiguration('CANCELED_ORDER_STATUS_ID', '', 6, 22);
+
         parent::install();
     }
 
@@ -47,5 +50,6 @@ class fs_cleverreach_interface extends StdModule
         $this->deleteConfiguration('IMPORT_SUBSCRIBERS');
         $this->deleteConfiguration('IMPORT_BUYERS');
         $this->deleteConfiguration('GROUP_ID');
+        $this->deleteConfiguration('CANCELED_ORDER_STATUS_ID');
     }
 }
